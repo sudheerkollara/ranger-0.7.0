@@ -24,6 +24,7 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.security.AccessControlException;
@@ -83,8 +84,10 @@ public class RangerAdminRESTClient implements RangerAdminClient {
 		String sslConfigFileName 		= RangerConfiguration.getInstance().get(propertyPrefix + ".policy.rest.ssl.config.file");
 		int	 restClientConnTimeOutMs	= RangerConfiguration.getInstance().getInt(propertyPrefix + ".policy.rest.client.connection.timeoutMs", 120 * 1000);
 		int	 restClientReadTimeOutMs	= RangerConfiguration.getInstance().getInt(propertyPrefix + ".policy.rest.client.read.timeoutMs", 30 * 1000);
+		String mUsername               	= RangerConfiguration.getInstance().get(propertyPrefix + ".policy.rest.url.username");
+		String mPassword 		        = RangerConfiguration.getInstance().get(propertyPrefix + ".policy.rest.url.password");
 
-		init(url, sslConfigFileName, restClientConnTimeOutMs , restClientReadTimeOutMs);
+		init(url, sslConfigFileName, restClientConnTimeOutMs , restClientReadTimeOutMs, mUsername, mPassword);
 	}
 
 	@Override
@@ -249,7 +252,7 @@ public class RangerAdminRESTClient implements RangerAdminClient {
 		}
 	}
 
-	private void init(String url, String sslConfigFileName, int restClientConnTimeOutMs , int restClientReadTimeOutMs ) {
+	private void init(String url, String sslConfigFileName, int restClientConnTimeOutMs , int restClientReadTimeOutMs, String mUsername, String mPassword ) {
 		if(LOG.isDebugEnabled()) {
 			LOG.debug("==> RangerAdminRESTClient.init(" + url + ", " + sslConfigFileName + ")");
 		}
@@ -257,9 +260,15 @@ public class RangerAdminRESTClient implements RangerAdminClient {
 		restClient = new RangerRESTClient(url, sslConfigFileName);
 		restClient.setRestClientConnTimeOutMs(restClientConnTimeOutMs);
 		restClient.setRestClientReadTimeOutMs(restClientReadTimeOutMs);
+		if(!StringUtils.isEmpty(mUsername) && !StringUtils.isEmpty(mPassword)) {
+			restClient.setBasicAuthInfo(mUsername, mPassword);
+			LOG.info("<== RangerAdminRESTClient BasicAuth true");
+		} else {
+			LOG.info("<== RangerAdminRESTClient BasicAuth false");
+		}
 
 		if(LOG.isDebugEnabled()) {
-			LOG.debug("<== RangerAdminRESTClient.init(" + url + ", " + sslConfigFileName + ")");
+			LOG.debug("<== RangerAdminRESTClient.init(" + url + ", " + sslConfigFileName + ", "+mUsername+")");
 		}
 	}
 
